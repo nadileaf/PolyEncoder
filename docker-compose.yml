@@ -1,0 +1,14 @@
+version: '3'
+services:
+  poly-encoders:
+    image: poly-encoders:latest
+    environment:
+      - MODEL_DIR=/opt/data/model
+      - POLY_M=16
+      - MAX_QUERY_LEN=256
+      - MAX_CANDIDATE_LEN=256
+      - RANDOM_SEED=12345
+    volumes:
+      - model:/opt/data/model
+    ports:
+      - "50051:50051"

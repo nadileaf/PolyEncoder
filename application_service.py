@@ -117,10 +117,10 @@ class ApplicationService:
                                            candidate_transform=self.response_transform)
 
     def embed_candidates(self, candidate_texts):
-        self.embedding_service.embed_candidates(candidate_texts)
+        return self.embedding_service.embed_candidates(candidate_texts)
 
     def embed_queries(self, query_texts):
-        self.embedding_service.embed_queries(query_texts)
+        return self.embedding_service.embed_queries(query_texts)
 
     def predict_from_file(self,
                           input_file_path,
