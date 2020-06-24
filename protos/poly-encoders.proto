@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.mesoor.polyencoders;
+
+message Embedding {
+    repeated float vector = 1;
+}
+
+message EmbedRequest {
+    repeated string formatted_texts = 1;
+}
+
+message CandidatesEmbeddingResponse {
+    repeated Embedding embeddings = 1;
+}
+
+message QueriesEmbeddingResponse {
+    message QueryEmbedding {
+        repeated Embedding embeddings = 1;
+    }
+    repeated QueryEmbedding embeddings = 1;
+}
+
+service Controller {
+    rpc EmbedCandidates(EmbedRequest) returns (CandidatesEmbeddingResponse);
+    rpc EmbedQueries(EmbedRequest) returns (QueriesEmbeddingResponse);
+}

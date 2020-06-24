@@ -1,5 +1,6 @@
 tqdm
 numpy
 transformers==2.5.1
-torch==1.4.0
-
+torch==1.5.1
+grpcio==1.28.1
+grpcio-tools==1.28.1
