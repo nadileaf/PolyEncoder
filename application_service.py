@@ -62,7 +62,7 @@ class Embedding:
         )
         embeddings = self.model.embed_response(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
         embeddings = embeddings.cpu().detach().numpy()
-        return embeddings[: 0, :]
+        return embeddings[:, 0, :]
 
     def embed_queries(self, query_texts):
         self.model.eval()
