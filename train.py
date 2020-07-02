@@ -402,6 +402,8 @@ def main():
     # parser.add_argument("--model_type", default='distilbert', type=str)
     parser.add_argument("--bert_model", default='ckpt/pretrained/bert-small-uncased', type=str)
     parser.add_argument("--model_type", default='bert', type=str)
+    parser.add_argument("--dist_backend", default='nccl', choices=["nccl", "gloo"], type=str,
+                        help="distributed backend")
     parser.add_argument("--s3_output_dir", required=True, type=str)
     parser.add_argument("--train_dir", default='data/ubuntu_data', type=str)
 
