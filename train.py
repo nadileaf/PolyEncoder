@@ -379,9 +379,10 @@ def train(args):
                         global_step=global_step
                     )
                     print('Global Step %d VAL res:\n' % global_step, val_result)
-                    state.best_eval_loss = min(val_result['eval_loss'], state.best_eval_loss)
-                    if device_id == 0:
-                        save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
+                    if val_result['eval_loss'] < state.best_eval_loss:
+                        state.best_eval_loss = val_result['eval_loss']
+                        if device_id == 0:
+                            save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
                 pass
 
         # add a eval step after each epoch
@@ -396,9 +397,10 @@ def train(args):
             global_step=global_step
         )
         print('Global Step %d VAL res:\n' % global_step, val_result)
-        state.best_eval_loss = min(val_result['eval_loss'], state.best_eval_loss)
-        if device_id == 0:
-            save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
+        if val_result['eval_loss'] < state.best_eval_loss:
+            state.best_eval_loss = val_result['eval_loss']
+            if device_id == 0:
+                save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
         print(global_step, tr_loss / nb_tr_steps)
 
 
