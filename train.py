@@ -13,6 +13,7 @@ import torch.distributed as dist
 from torch.nn import CrossEntropyLoss
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 from transformers import BertModel, BertConfig, BertTokenizerFast
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
@@ -252,14 +253,17 @@ def init_dataloader(train_dir,
     test_dataset = SelectionDataset(os.path.join(train_dir, 'test.txt'),
                                     context_transform, response_transform, sample_cnt=5000)
     train_dataloader = DataLoader(train_dataset,
-                                  batch_size=train_batch_size, collate_fn=train_dataset.batchify_join_str,
-                                  shuffle=True)
+                                  batch_size=train_batch_size,
+                                  collate_fn=train_dataset.batchify_join_str,
+                                  sampler=DistributedSampler(train_dataset, shuffle=True))
     val_dataloader = DataLoader(val_dataset,
-                                batch_size=eval_batch_size, collate_fn=val_dataset.batchify_join_str,
-                                shuffle=False)
+                                batch_size=eval_batch_size,
+                                collate_fn=val_dataset.batchify_join_str,
+                                sampler=DistributedSampler(val_dataset, shuffle=False))
     test_dataloader = DataLoader(test_dataset,
-                                 batch_size=eval_batch_size, collate_fn=test_dataset.batchify_join_str,
-                                 shuffle=False)
+                                 batch_size=eval_batch_size,
+                                 collate_fn=test_dataset.batchify_join_str,
+                                 sampler=DistributedSampler(test_dataset, shuffle=False))
     total_steps = len(train_dataloader) // train_batch_size * (max(5, train_epochs))
     return train_dataloader, val_dataloader, test_dataloader, total_steps
 
@@ -318,7 +322,7 @@ def train(args):
     global_step = 0
     best_eval_loss = float('inf')
     cp_to_s3(os.path.join(args.bert_model, 'vocab.txt'), os.path.join(args.s3_output_dir, 'vocab.txt'))
-    cp_to_s3(os.path.join(args.bert_model, 'config.txt'), os.path.join(args.s3_output_dir, 'config.txt'))
+    cp_to_s3(os.path.join(args.bert_model, 'config.json'), os.path.join(args.s3_output_dir, 'config.json'))
     for epoch in range(epoch_start, int(args.num_train_epochs) + 1):
         state.epoch = epoch
         tr_loss = 0
