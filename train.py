@@ -273,7 +273,6 @@ def train(args):
 
     state_save_path = os.path.join(args.s3_output_dir, 'pytorch_model.bin')
     device_id = int(os.environ["LOCAL_RANK"])
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(device_id)
     torch.cuda.set_device(device_id)
     print(f"=> set cuda device = {device_id}")
     os.environ["NCCL_BLOCKING_WAIT"] = "1"
