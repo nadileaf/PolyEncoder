@@ -144,12 +144,13 @@ def load_checkpoint(
 
     state = State(model, optimizer)
     s3 = s3fs.S3FileSystem()
-
-    with s3.open(checkpoint_file, 'rb') as f:
-        print(f"=> loading checkpoint file: {checkpoint_file}")
-        state.load(f, device_id)
-        print(f"=> loaded checkpoint file: {checkpoint_file}")
-    print(f"=> done restoring from previous checkpoint")
+    if s3.exists(checkpoint_file):
+        with s3.open(checkpoint_file, 'rb') as f:
+            print(f"=> loading checkpoint file: {checkpoint_file}")
+            state.load(f, device_id)
+            print(f"=> loaded checkpoint file: {checkpoint_file}")
+        print(f"=> done restoring from previous checkpoint")
+    print(f"=> fresh state")
     return state
 
 
