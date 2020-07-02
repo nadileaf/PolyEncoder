@@ -180,7 +180,7 @@ def save_checkpoint(state: State, is_best: bool, filename: str):
         with s3.open(tmp_model_filename, 'wb') as f:
             torch.save(state.capture_snapshot()['state_dict'], f)
         print(f"=> best model found at epoch {state.epoch} saving to {model_filename}")
-        s3.cp(tmp_model_filename, model_filename)
+        s3.mv(tmp_model_filename, model_filename)
 
 
 def init_model(bert_model_dir,
