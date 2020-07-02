@@ -442,10 +442,8 @@ def main():
         help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
              "See details at https://nvidia.github.io/apex/amp.html",
     )
-    parser.add_argument('--gpu', type=int, default=0)
     args = parser.parse_args()
     print(args)
-    os.environ["CUDA_VISIBLE_DEVICES"] = "%d" % args.gpu
     set_seed(args)
     train(args)
 
