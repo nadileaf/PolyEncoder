@@ -276,7 +276,7 @@ def train(args):
 
     # log_wf = open(os.path.join(args.output_dir, 'log.txt'), 'a', encoding='utf-8')
 
-    state_save_path = os.path.join(args.s3_output_dir, 'pytorch_model.bin')
+    checkpoint_file = os.path.join(args.s3_output_dir, 'state_checkpoint.bin')
     device_id = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(device_id)
     print(f"=> set cuda device = {device_id}")
@@ -312,7 +312,7 @@ def train(args):
     model = DistributedDataParallel(model, device_ids=[device_id])
 
     state = load_checkpoint(
-        args.s3_output_dir,
+        checkpoint_file,
         device_id=device_id,
         model=model,
         optimizer=optimizer
@@ -379,7 +379,7 @@ def train(args):
                     print('Global Step %d VAL res:\n' % global_step, val_result)
                     state.best_eval_loss = min(val_result['eval_loss'], state.best_eval_loss)
                     if device_id == 0:
-                        save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, state_save_path)
+                        save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
                 pass
 
         # add a eval step after each epoch
@@ -396,7 +396,7 @@ def train(args):
         print('Global Step %d VAL res:\n' % global_step, val_result)
         state.best_eval_loss = min(val_result['eval_loss'], state.best_eval_loss)
         if device_id == 0:
-            save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, state_save_path)
+            save_checkpoint(state, val_result['eval_loss'] < best_eval_loss, checkpoint_file)
         print(global_step, tr_loss / nb_tr_steps)
 
 
