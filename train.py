@@ -309,7 +309,9 @@ def train(args):
         print_freq=args.print_freq
     )
     model.cuda(device_id)
-    model = DistributedDataParallel(model, device_ids=[device_id])
+    model = DistributedDataParallel(model,
+                                    device_ids=[device_id],
+                                    find_unused_parameters=True)
 
     state = load_checkpoint(
         checkpoint_file,
