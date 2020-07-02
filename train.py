@@ -266,12 +266,12 @@ def init_dataloader(train_dir,
 def train(args):
     print('=' * 80)
     print('Train dir:', args.train_dir)
-    print('Output dir:', args.output_dir)
+    print('S3 Output dir:', args.s3_output_dir)
     print('=' * 80)
 
     # log_wf = open(os.path.join(args.output_dir, 'log.txt'), 'a', encoding='utf-8')
 
-    state_save_path = os.path.join(args.output_dir, 'pytorch_model.bin')
+    state_save_path = os.path.join(args.s3_output_dir, 'pytorch_model.bin')
     device_id = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(device_id)
     print(f"=> set cuda device = {device_id}")
@@ -307,7 +307,7 @@ def train(args):
     model = DistributedDataParallel(model, device_ids=[device_id])
 
     state = load_checkpoint(
-        args.elastic_ckpt_s3_path,
+        args.s3_output_dir,
         device_id=device_id,
         model=model,
         optimizer=optimizer
@@ -316,8 +316,8 @@ def train(args):
     epoch_start = state.epoch + 1
     global_step = 0
     best_eval_loss = float('inf')
-    cp_to_s3(os.path.join(args.bert_model, 'vocab.txt'), os.path.join(args.output_dir, 'vocab.txt'))
-    cp_to_s3(os.path.join(args.bert_model, 'config.txt'), os.path.join(args.output_dir, 'config.txt'))
+    cp_to_s3(os.path.join(args.bert_model, 'vocab.txt'), os.path.join(args.s3_output_dir, 'vocab.txt'))
+    cp_to_s3(os.path.join(args.bert_model, 'config.txt'), os.path.join(args.s3_output_dir, 'config.txt'))
     for epoch in range(epoch_start, int(args.num_train_epochs) + 1):
         state.epoch = epoch
         tr_loss = 0
@@ -401,9 +401,8 @@ def main():
     # parser.add_argument("--bert_model", default='ckpt/pretrained/distilbert-base-uncased', type=str)
     # parser.add_argument("--model_type", default='distilbert', type=str)
     parser.add_argument("--bert_model", default='ckpt/pretrained/bert-small-uncased', type=str)
-    parser.add_argument("--elastic_ckpt_s3_path", default='', type=str)
     parser.add_argument("--model_type", default='bert', type=str)
-    parser.add_argument("--output_dir", required=True, type=str)
+    parser.add_argument("--s3_output_dir", required=True, type=str)
     parser.add_argument("--train_dir", default='data/ubuntu_data', type=str)
 
     parser.add_argument("--use_pretrain", action="store_true")
