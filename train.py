@@ -10,7 +10,7 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import BertModel, BertConfig, BertTokenizer
+from transformers import BertModel, BertConfig, BertTokenizerFast
 from transformers import DistilBertModel, DistilBertConfig, DistilBertTokenizer
 from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     set_seed(args)
 
     MODEL_CLASSES = {
-        'bert': (BertConfig, BertTokenizer, BertModel),
+        'bert': (BertConfig, BertTokenizerFast, BertModel),
         'distilbert': (DistilBertConfig, DistilBertTokenizer, DistilBertModel)
     }
     ConfigClass, TokenizerClass, BertModelClass = MODEL_CLASSES[args.model_type]
