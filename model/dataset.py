@@ -137,16 +137,19 @@ class SelectionDataset(Dataset):
             contexts_segment_ids_list_batch.append(contexts_segment_ids_list)
             contexts_input_masks_list_batch.append(contexts_input_masks_list)
             responses_token_ids_list_batch.append(
-                self.pad_with_default(responses_token_ids_list, max_response_len,
+                self.pad_with_default(responses_token_ids_list,
+                                      max_response_len,
                                       self.default_responses_token_ids))
             responses_segment_ids_list_batch.append(
-                self.pad_with_default(responses_segment_ids_list, max_response_len,
+                self.pad_with_default(responses_segment_ids_list,
+                                      max_response_len,
                                       self.default_responses_segment_ids))
             responses_input_masks_list_batch.append(
-                self.pad_with_default(responses_input_masks_list, max_response_len,
+                self.pad_with_default(responses_input_masks_list,
+                                      max_response_len,
                                       self.default_responses_input_masks))
 
-            labels_batch.append(sample[-1])
+            labels_batch.append(self.pad_with_default(sample[-1], max_response_len, 0))
 
         long_tensors = [contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch,
                         responses_token_ids_list_batch, responses_segment_ids_list_batch,
