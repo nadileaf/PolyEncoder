@@ -118,7 +118,7 @@ class SelectionDataset(Dataset):
         max_response_len = 0
         for sample in batch:
             _, (responses_token_ids_list, _, _, _) = sample[:2]
-            max_response_len = max(responses_token_ids_list, max_response_len)
+            max_response_len = max(len(responses_token_ids_list), max_response_len)
 
         for sample in batch:
             (contexts_token_ids_list, contexts_segment_ids_list, contexts_input_masks_list), \
