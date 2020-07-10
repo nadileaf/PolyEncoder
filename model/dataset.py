@@ -14,6 +14,13 @@ class SelectionDataset(Dataset):
 
         self.data_source = []
         self.transformed_data = {}
+        (default_responses_token_ids_list,  # [[0, 0, ...]]
+         default_responses_segment_ids_list,  # [[0, 0, ...]]
+         default_responses_input_masks_list,  # [[0, 0, ...]]
+         _) = self.response_transform([""])
+        self.default_responses_token_ids = default_responses_token_ids_list[0]
+        self.default_responses_segment_ids = default_responses_segment_ids_list[0]
+        self.default_responses_input_masks = default_responses_input_masks_list[0]
 
         cache_path = file_path + "_" + str(context_transform) + '_samplecnt%s' % str(sample_cnt) + '.cache'
         if os.path.exists(cache_path):
@@ -107,9 +114,9 @@ class SelectionDataset(Dataset):
         return contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch, contexts_masks_batch, \
                responses_token_ids_list_batch, responses_segment_ids_list_batch, responses_input_masks_list_batch, labels_batch
 
-    def pad_with_empty_list(self, lists, length):
+    def pad_with_default(self, lists, length, default):
         if len(lists) < length:
-            return lists + [[]] * (length - len(lists))
+            return lists + [default] * (length - len(lists))
         else:
             return lists
 
@@ -130,11 +137,14 @@ class SelectionDataset(Dataset):
             contexts_segment_ids_list_batch.append(contexts_segment_ids_list)
             contexts_input_masks_list_batch.append(contexts_input_masks_list)
             responses_token_ids_list_batch.append(
-                self.pad_with_empty_list(responses_token_ids_list, max_response_len))
+                self.pad_with_default(responses_token_ids_list, max_response_len,
+                                      self.default_responses_token_ids))
             responses_segment_ids_list_batch.append(
-                self.pad_with_empty_list(responses_segment_ids_list, max_response_len))
+                self.pad_with_default(responses_segment_ids_list, max_response_len,
+                                      self.default_responses_segment_ids))
             responses_input_masks_list_batch.append(
-                self.pad_with_empty_list(responses_input_masks_list, max_response_len))
+                self.pad_with_default(responses_input_masks_list, max_response_len,
+                                      self.default_responses_input_masks))
 
             labels_batch.append(sample[-1])
 
