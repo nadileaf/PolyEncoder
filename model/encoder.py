@@ -107,6 +107,7 @@ class BertPolyDssmModel(BertPreTrainedModel):
 
         self.poly_m = kwargs['poly_m']
         self.poly_code_embeddings = nn.Embedding(self.poly_m + 1, config.hidden_size)
+        self.loss_function = nn.CrossEntropyLoss()
         try:
             self.dropout = nn.Dropout(config.hidden_dropout_prob)
             self.context_fc = nn.Linear(config.hidden_size, self.vec_dim)
@@ -168,8 +169,7 @@ class BertPolyDssmModel(BertPreTrainedModel):
                 mask = torch.eye(context_input_ids.size(0)).to(context_input_ids.device)
             else:
                 mask = labels.argmax(dim=1)
-            loss = F.log_softmax(dot_product * 5, dim=-1) * mask
-            loss = (-loss.sum(dim=1)).mean()
+            loss = self.loss_function(dot_product * 5, mask)
             return loss
         else:
             cos_similarity = (dot_product + 1) / 2
