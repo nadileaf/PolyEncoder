@@ -8,7 +8,7 @@ from common_utils import pickle_load, pickle_dump
 
 
 class SelectionDataset(Dataset):
-    def __init__(self, file_path, context_transform, response_transform, sample_cnt=None):
+    def __init__(self, file_path, context_transform, response_transform, sample_cnt=None, max_negative=None):
         self.context_transform = context_transform
         self.response_transform = response_transform
 
@@ -30,6 +30,8 @@ class SelectionDataset(Dataset):
                     split = line.strip().split('\t')
                     lbl, context, response = int(split[0]), split[1:-1], split[-1]
                     if lbl == 1 and len(group['responses']) > 0:
+                        if max_negative:
+                            group['responses'] = group['responses'][:max_negative]
                         self.data_source.append(group)
                         group = {
                             'context': None,
@@ -42,6 +44,8 @@ class SelectionDataset(Dataset):
                     group['labels'].append(lbl)
                     group['context'] = context
                 if len(group['responses']) > 0:
+                    if max_negative:
+                        group['responses'] = group['responses'][:max_negative]
                     self.data_source.append(group)
 
             for idx in tqdm(range(len(self.data_source))):
@@ -103,10 +107,19 @@ class SelectionDataset(Dataset):
         return contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch, contexts_masks_batch, \
                responses_token_ids_list_batch, responses_segment_ids_list_batch, responses_input_masks_list_batch, labels_batch
 
+    def pad_with_empty_list(self, l, length):
+        if len(l) < length:
+            return l + [[]] * (length - len(l))
+
     def batchify_join_str(self, batch):
         contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch, \
         responses_token_ids_list_batch, responses_segment_ids_list_batch, responses_input_masks_list_batch = [], [], [], [], [], []
         labels_batch = []
+        max_response_len = 0
+        for sample in batch:
+            _, (responses_token_ids_list, _, _, _) = sample[:2]
+            max_response_len = max(responses_token_ids_list, max_response_len)
+
         for sample in batch:
             (contexts_token_ids_list, contexts_segment_ids_list, contexts_input_masks_list), \
             (responses_token_ids_list, responses_segment_ids_list, responses_input_masks_list, _) = sample[:2]
@@ -115,9 +128,12 @@ class SelectionDataset(Dataset):
             contexts_segment_ids_list_batch.append(contexts_segment_ids_list)
             contexts_input_masks_list_batch.append(contexts_input_masks_list)
 
-            responses_token_ids_list_batch.append(responses_token_ids_list)
-            responses_segment_ids_list_batch.append(responses_segment_ids_list)
-            responses_input_masks_list_batch.append(responses_input_masks_list)
+            responses_token_ids_list_batch.append(
+                self.pad_with_empty_list(responses_token_ids_list, max_response_len))
+            responses_segment_ids_list_batch.append(
+                self.pad_with_empty_list(responses_segment_ids_list, max_response_len))
+            responses_input_masks_list_batch.append(
+                self.pad_with_empty_list(responses_input_masks_list, max_response_len))
 
             labels_batch.append(sample[-1])
 

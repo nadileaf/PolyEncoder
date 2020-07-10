@@ -81,6 +81,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--poly_m", default=16, type=int, help="Total batch size for eval.")
     parser.add_argument("--max_history", default=4, type=int, help="Total batch size for eval.")
+    parser.add_argument("--max_negative", default=5, type=int, help="Max negative size for response batch.")
 
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--weight_decay", default=0.0, type=float)
@@ -129,20 +130,17 @@ if __name__ == '__main__':
     print('Output dir:', args.output_dir)
     print('=' * 80)
     train_dataset = SelectionDataset(os.path.join(args.train_dir, 'train.txt'),
-                                     context_transform, response_transform, sample_cnt=None)
+                                     context_transform, response_transform, sample_cnt=None,
+                                     max_negative=args.max_negative)
     val_dataset = SelectionDataset(os.path.join(args.train_dir, 'test.txt'),
-                                   context_transform, response_transform, sample_cnt=5000)
-    # test_dataset = SelectionDataset(os.path.join(args.train_dir, 'test.txt'),
-    #                                 context_transform, response_transform, sample_cnt=5000)
+                                   context_transform, response_transform, sample_cnt=5000,
+                                   max_negative=args.max_negative)
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=args.train_batch_size, collate_fn=train_dataset.batchify_join_str,
                                   shuffle=True)
     val_dataloader = DataLoader(val_dataset,
                                 batch_size=args.eval_batch_size, collate_fn=val_dataset.batchify_join_str,
                                 shuffle=False)
-    # test_dataloader = DataLoader(test_dataset,
-    #                              batch_size=args.eval_batch_size, collate_fn=val_dataset.batchify_join_str,
-    #                              shuffle=False)
     t_total = len(train_dataloader) // args.train_batch_size * (max(5, args.num_train_epochs))
 
     epoch_start = 1
