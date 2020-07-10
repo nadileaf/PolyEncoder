@@ -166,9 +166,9 @@ class BertPolyDssmModel(BertPreTrainedModel):
         dot_product = torch.sum(final_context_vec * responses_vec, -1)  # [bs, res_cnt], res_cnt==bs when training
         if labels is not None:
             if res_cnt == 1:
-                mask = torch.eye(context_input_ids.size(0)).to(context_input_ids.device)
+                mask = torch.arange(0, context_input_ids.size(0), dtype=torch.long).to(context_input_ids.device)
             else:
-                mask = labels.argmax(dim=1)
+                mask = labels.argmax(dim=1).to(context_input_ids.device)
             loss = self.loss_function(dot_product * 5, mask)
             return loss
         else:
