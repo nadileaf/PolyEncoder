@@ -107,9 +107,11 @@ class SelectionDataset(Dataset):
         return contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch, contexts_masks_batch, \
                responses_token_ids_list_batch, responses_segment_ids_list_batch, responses_input_masks_list_batch, labels_batch
 
-    def pad_with_empty_list(self, l, length):
-        if len(l) < length:
-            return l + [[]] * (length - len(l))
+    def pad_with_empty_list(self, lists, length):
+        if len(lists) < length:
+            return lists + [[]] * (length - len(lists))
+        else:
+            return lists
 
     def batchify_join_str(self, batch):
         contexts_token_ids_list_batch, contexts_segment_ids_list_batch, contexts_input_masks_list_batch, \
@@ -127,7 +129,6 @@ class SelectionDataset(Dataset):
             contexts_token_ids_list_batch.append(contexts_token_ids_list)
             contexts_segment_ids_list_batch.append(contexts_segment_ids_list)
             contexts_input_masks_list_batch.append(contexts_input_masks_list)
-
             responses_token_ids_list_batch.append(
                 self.pad_with_empty_list(responses_token_ids_list, max_response_len))
             responses_segment_ids_list_batch.append(
