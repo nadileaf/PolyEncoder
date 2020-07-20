@@ -1,4 +1,5 @@
 import os
+import os
 import random
 
 import numpy as np
@@ -155,17 +156,3 @@ class ApplicationService:
         with open(output_file_path, 'w') as f:
             for i in zip(result, raw_dataset):
                 f.write(str(i[0]) + '\t' + i[1])
-
-
-def predict_test():
-    bert_model_dir = 'result'
-    test_file_path = '../data/poly_encoder_data_pair/test.txt'
-    output_file_path = 'test_output/output.txt'
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "%d" % 0
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    application_service = ApplicationService(bert_model_dir=bert_model_dir,
-                                             architecture='poly',
-                                             device=device,
-                                             poly_m=16)
-    application_service.predict_from_file(test_file_path, output_file_path)
