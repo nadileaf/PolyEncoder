@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument("--train_dir", default='data/ubuntu_data', type=str)
 
     parser.add_argument("--use_pretrain", action="store_true")
+    parser.add_argument("--train_shuffle", action="store_true")
     parser.add_argument("--architecture", required=True, type=str, help='[poly, bi]')
 
     parser.add_argument("--max_contexts_length", default=128, type=int)
@@ -137,7 +138,7 @@ if __name__ == '__main__':
                                    max_negative=args.max_negative)
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=args.train_batch_size, collate_fn=train_dataset.batchify_join_str,
-                                  shuffle=True)
+                                  shuffle=args.train_shuffle)
     val_dataloader = DataLoader(val_dataset,
                                 batch_size=args.eval_batch_size, collate_fn=val_dataset.batchify_join_str,
                                 shuffle=False)
