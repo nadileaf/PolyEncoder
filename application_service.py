@@ -3,6 +3,7 @@ import os
 import random
 
 import numpy as np
+import s3fs
 import torch
 from torch.utils.data import DataLoader
 from transformers import BertModel, BertTokenizer, BertConfig
@@ -81,11 +82,34 @@ class ApplicationService:
         architecture = 'poly'
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ConfigClass, TokenizerClass, BertModelClass = BertConfig, BertTokenizer, BertModel
+        vocab_path = os.path.join(bert_model_dir, "vocab.txt")
+        config_path = os.path.join(bert_model_dir, 'config.json')
+        model_path = os.path.join(bert_model_dir, "pytorch_model.bin")
+        if bert_model_dir.startswith("s3://"):
+            vocab_path = vocab_path.lstrip("s3://")
+            config_path = config_path.lstrip("s3://")
+            model_path = model_path.lstrip("s3://")
+            bert_model_dir = bert_model_dir.lstrip("s3://")
+            s3 = s3fs.S3FileSystem()
+            if not os.path.exists(bert_model_dir):
+                os.makedirs(bert_model_dir)
+            print(f"Downloading [{vocab_path}] from s3...")
+            with s3.open(vocab_path, 'rb') as fin:
+                with open(vocab_path, 'wb') as fout:
+                    fout.write(fin.read())
+            print(f"Downloading [{config_path}] from s3...")
+            with s3.open(config_path, 'rb') as fin:
+                with open(config_path, 'wb') as fout:
+                    fout.write(fin.read())
+            print(f"Downloading [{model_path}] from s3...")
+            with s3.open(model_path, 'rb') as fin:
+                with open(model_path, 'wb') as fout:
+                    fout.write(fin.read())
 
-        bert_config = ConfigClass.from_json_file(os.path.join(bert_model_dir, 'config.json'))
-        previous_model_file = os.path.join(bert_model_dir, "pytorch_model.bin")
-        print('Loading parameters from', previous_model_file)
-        model_state_dict = torch.load(previous_model_file, map_location="cpu")
+        tokenizer = TokenizerClass.from_pretrained(vocab_path, do_lower_case=True)
+        bert_config = ConfigClass.from_json_file(config_path)
+        print('Loading parameters from', model_path)
+        model_state_dict = torch.load(model_path, map_location="cpu")
         bert = BertModelClass.from_pretrained(bert_model_dir, state_dict=model_state_dict)
         del model_state_dict
 
@@ -104,7 +128,6 @@ class ApplicationService:
         ConfigClass, TokenizerClass, BertModelClass = MODEL_CLASSES['bert']
 
         ## init dataset and bert model
-        tokenizer = TokenizerClass.from_pretrained(os.path.join(bert_model_dir, "vocab.txt"), do_lower_case=True)
         self.context_transform = SelectionJoinTransform(tokenizer=tokenizer,
                                                         max_len=config.MAX_QUERY_LEN,
                                                         max_history=4)

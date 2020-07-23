@@ -4,3 +4,4 @@ transformers==2.5.1
 torch==1.5.1
 grpcio==1.28.1
 grpcio-tools==1.28.1
+s3fs==0.4.2
