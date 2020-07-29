@@ -75,6 +75,14 @@ class Embedding:
             return embeddings
 
 
+def slicing_list(l, n):
+    bs = len(l) // n
+    for i in range(bs):
+        yield l[i * n:n * (i + 1)]
+    if bs * n < len(l):
+        yield l[bs * n:n * (bs + 1)]
+
+
 class ApplicationService:
     def __init__(self):
         bert_model_dir = config.MODEL_DIR
@@ -138,10 +146,16 @@ class ApplicationService:
                                            candidate_transform=self.response_transform)
 
     def embed_candidates(self, candidate_texts):
-        return self.embedding_service.embed_candidates(candidate_texts)
+        result = []
+        for ts in slicing_list(candidate_texts, config.BATCH_SIZE):
+            result.extend(self.embedding_service.embed_candidates(ts))
+        return result
 
     def embed_queries(self, query_texts):
-        return self.embedding_service.embed_queries(query_texts)
+        result = []
+        for ts in slicing_list(query_texts, config.BATCH_SIZE):
+            result.extend(self.embedding_service.embed_queries(ts))
+        return result
 
     def predict_from_file(self,
                           input_file_path,
