@@ -1,5 +1,4 @@
 import os
-import os
 import random
 
 import numpy as np
@@ -58,22 +57,22 @@ class Embedding:
         return token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch
 
     def embed_candidates(self, candidate_texts):
-        self.model.eval()
-        token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch = tuple(
-            t.to(self.device) for t in self.batch_candidate_to_text(candidate_texts)
-        )
-        embeddings = self.model.embed_response(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
-        embeddings = embeddings.cpu().detach().numpy()
-        return embeddings[:, 0, :]
+        with torch.no_grad():
+            token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch = tuple(
+                t.to(self.device) for t in self.batch_candidate_to_text(candidate_texts)
+            )
+            embeddings = self.model.embed_response(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
+            embeddings = embeddings.cpu().detach().numpy()
+            return embeddings[:, 0, :]
 
     def embed_queries(self, query_texts):
-        self.model.eval()
-        token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch = tuple(
-            t.to(self.device) for t in self.batch_query_to_text(query_texts)
-        )
-        embeddings = self.model.embed_context(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
-        embeddings = embeddings.cpu().detach().numpy()
-        return embeddings
+        with torch.no_grad():
+            token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch = tuple(
+                t.to(self.device) for t in self.batch_query_to_text(query_texts)
+            )
+            embeddings = self.model.embed_context(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
+            embeddings = embeddings.cpu().detach().numpy()
+            return embeddings
 
 
 class ApplicationService:
@@ -125,8 +124,6 @@ class ApplicationService:
         MODEL_CLASSES = {
             'bert': (BertConfig, BertTokenizer, BertModel),
         }
-        ConfigClass, TokenizerClass, BertModelClass = MODEL_CLASSES['bert']
-
         ## init dataset and bert model
         self.context_transform = SelectionJoinTransform(tokenizer=tokenizer,
                                                         max_len=config.MAX_QUERY_LEN,
