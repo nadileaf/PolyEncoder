@@ -17,6 +17,8 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
+os.environ['LRU_CACHE_CAPACITY'] = '1'
+
 
 class Embedding:
     def __init__(self, model, query_transform, candidate_transform):
@@ -62,8 +64,9 @@ class Embedding:
                 t.to(self.device) for t in self.batch_candidate_to_text(candidate_texts)
             )
             embeddings = self.model.embed_response(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
-            embeddings = embeddings.cpu().detach().numpy()
-            return embeddings[:, 0, :]
+            result = embeddings.cpu().detach().numpy()
+            del embeddings
+            return result[:, 0, :]
 
     def embed_queries(self, query_texts):
         with torch.no_grad():
@@ -71,8 +74,9 @@ class Embedding:
                 t.to(self.device) for t in self.batch_query_to_text(query_texts)
             )
             embeddings = self.model.embed_context(token_ids_list_batch, segment_ids_list_batch, input_masks_list_batch)
-            embeddings = embeddings.cpu().detach().numpy()
-            return embeddings
+            result = embeddings.cpu().detach().numpy()
+            del embeddings
+            return result
 
 
 def slicing_list(l, n):
