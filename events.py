@@ -24,7 +24,7 @@ class PolyEncodersTrainingTriggeredEvent:
 
 
 @dataclass
-class PolyEncodersTrainingCompletedMessage:
+class PolyEncodersTrainingCompletedEvent:
     model_dir: str
     max_query_len: int
     max_candidate_len: int

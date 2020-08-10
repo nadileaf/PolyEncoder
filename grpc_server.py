@@ -9,7 +9,7 @@ from confluent_kafka import Consumer
 import config
 import poly_encoders_pb2_grpc
 from application_service import ApplicationService
-from events import PolyEncodersTrainingCompletedMessage
+from events import PolyEncodersTrainingCompletedEvent
 from poly_encoders_pb2 import CandidatesEmbeddingResponse, QueriesEmbeddingResponse, Embedding
 from poly_encoders_pb2_grpc import ControllerServicer
 
@@ -51,7 +51,7 @@ class Listener:
             else:
                 try:
                     value = msg.value().decode('utf-8')
-                    event = PolyEncodersTrainingCompletedMessage(**json.loads(value))
+                    event = PolyEncodersTrainingCompletedEvent(**json.loads(value))
                     application_services['latest'] = ApplicationService(
                         model_dir=event.model_dir,
                         poly_m=event.poly_m,
@@ -60,12 +60,11 @@ class Listener:
                         random_seed=event.random_seed
                     )
                     logger.debug('Received message: {}'.format(value))
+                    self.consumer.commit(message=msgs[-1])
                 except Exception as e:
                     logger.exception(e)
                     logger.error(msg.value())
                     raise e
-
-                self.consumer.commit(message=msgs[-1])
 
 
 def get_latest_application_service():

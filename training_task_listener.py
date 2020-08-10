@@ -6,7 +6,7 @@ from dataclasses import asdict
 from confluent_kafka import Consumer, Producer
 
 import config
-from events import PolyEncodersTrainingTriggeredEvent, PolyEncodersTrainingCompletedMessage
+from events import PolyEncodersTrainingTriggeredEvent, PolyEncodersTrainingCompletedEvent
 from train import train
 
 logger = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ class TrainingTaskListener:
             raise err
         else:
             logger.debug('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+            self.consumer.commit(message=msg)
 
     def listen(self):
         logger.info(f"Listening on topic: {self.training_task_topic}")
@@ -58,10 +59,9 @@ class TrainingTaskListener:
                         event = PolyEncodersTrainingTriggeredEvent(**json.loads(value))
                         logger.debug('Received message: {}'.format(value))
                         train(**asdict(event))
-                        self.consumer.commit(message=msgs[-1])
                         self.producer.poll(0)
                         logger.debug(f"Producing to topic: {self.training_completed_topic}...")
-                        completed_event = PolyEncodersTrainingCompletedMessage(
+                        completed_event = PolyEncodersTrainingCompletedEvent(
                             model_dir=event.output_dir,
                             max_query_len=event.max_query_len,
                             max_candidate_len=event.max_candidate_len,
