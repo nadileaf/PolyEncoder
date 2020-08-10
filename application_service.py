@@ -8,14 +8,7 @@ from torch.utils.data import DataLoader
 from transformers import BertModel, BertTokenizer, BertConfig
 
 import config
-from model import BertPolyDssmModel, BertDssmModel, SelectionDataset, SelectionJoinTransform, \
-    SelectionSequentialTransform
-
-seed = config.RANDOM_SEED
-
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
+from model import BertPolyDssmModel, SelectionDataset, SelectionJoinTransform, SelectionSequentialTransform
 
 os.environ['LRU_CACHE_CAPACITY'] = '1'
 
@@ -88,22 +81,28 @@ def slicing_list(l, n):
 
 
 class ApplicationService:
-    def __init__(self):
-        bert_model_dir = config.MODEL_DIR
-        architecture = 'poly'
+    def __init__(self,
+                 model_dir: str,
+                 poly_m: int,
+                 max_query_len: int,
+                 max_candidate_len: int,
+                 random_seed: int):
+        random.seed(random_seed)
+        np.random.seed(random_seed)
+        torch.manual_seed(random_seed)
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        ConfigClass, TokenizerClass, BertModelClass = BertConfig, BertTokenizer, BertModel
-        vocab_path = os.path.join(bert_model_dir, "vocab.txt")
-        config_path = os.path.join(bert_model_dir, 'config.json')
-        model_path = os.path.join(bert_model_dir, "pytorch_model.bin")
-        if bert_model_dir.startswith("s3://"):
+        vocab_path = os.path.join(model_dir, "vocab.txt")
+        config_path = os.path.join(model_dir, 'config.json')
+        model_path = os.path.join(model_dir, "pytorch_model.bin")
+        if model_dir.startswith("s3://"):
             vocab_path = vocab_path.lstrip("s3://")
             config_path = config_path.lstrip("s3://")
             model_path = model_path.lstrip("s3://")
-            bert_model_dir = bert_model_dir.lstrip("s3://")
+            model_dir = model_dir.lstrip("s3://")
             s3 = s3fs.S3FileSystem()
-            if not os.path.exists(bert_model_dir):
-                os.makedirs(bert_model_dir)
+            if not os.path.exists(model_dir):
+                os.makedirs(model_dir)
             print(f"Downloading [{vocab_path}] from s3...")
             with s3.open(vocab_path, 'rb') as fin:
                 with open(vocab_path, 'wb') as fout:
@@ -117,31 +116,23 @@ class ApplicationService:
                 with open(model_path, 'wb') as fout:
                     fout.write(fin.read())
 
-        tokenizer = TokenizerClass.from_pretrained(vocab_path, do_lower_case=True)
-        bert_config = ConfigClass.from_json_file(config_path)
+        tokenizer = BertTokenizer.from_pretrained(vocab_path, do_lower_case=True)
+        bert_config = BertConfig.from_json_file(config_path)
         print('Loading parameters from', model_path)
         model_state_dict = torch.load(model_path, map_location="cpu")
-        bert = BertModelClass.from_pretrained(bert_model_dir, state_dict=model_state_dict)
+        bert = BertModel.from_pretrained(model_dir, state_dict=model_state_dict)
         del model_state_dict
 
-        if architecture == 'poly':
-            self.model = BertPolyDssmModel(bert_config, bert=bert, poly_m=config.POLY_M)
-        elif architecture == 'bi':
-            self.model = BertDssmModel(bert_config, bert=bert)
-        else:
-            raise Exception('Unknown architecture.')
+        self.model = BertPolyDssmModel(bert_config, bert=bert, poly_m=poly_m)
         self.device = device
         self.model.to(device)
 
-        MODEL_CLASSES = {
-            'bert': (BertConfig, BertTokenizer, BertModel),
-        }
         ## init dataset and bert model
         self.context_transform = SelectionJoinTransform(tokenizer=tokenizer,
-                                                        max_len=config.MAX_QUERY_LEN,
+                                                        max_len=max_query_len,
                                                         max_history=4)
         self.response_transform = SelectionSequentialTransform(tokenizer=tokenizer,
-                                                               max_len=config.MAX_CANDIDATE_LEN,
+                                                               max_len=max_candidate_len,
                                                                max_history=None,
                                                                pair_last=False)
 
