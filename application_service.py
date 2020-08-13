@@ -103,18 +103,21 @@ class ApplicationService:
             s3 = s3fs.S3FileSystem()
             if not os.path.exists(model_dir):
                 os.makedirs(model_dir)
-            print(f"Downloading [{vocab_path}] from s3...")
-            with s3.open(vocab_path, 'rb') as fin:
-                with open(vocab_path, 'wb') as fout:
-                    fout.write(fin.read())
-            print(f"Downloading [{config_path}] from s3...")
-            with s3.open(config_path, 'rb') as fin:
-                with open(config_path, 'wb') as fout:
-                    fout.write(fin.read())
-            print(f"Downloading [{model_path}] from s3...")
-            with s3.open(model_path, 'rb') as fin:
-                with open(model_path, 'wb') as fout:
-                    fout.write(fin.read())
+            if not os.path.exists(vocab_path):
+                print(f"Downloading [{vocab_path}] from s3...")
+                with s3.open(vocab_path, 'rb') as fin:
+                    with open(vocab_path, 'wb') as fout:
+                        fout.write(fin.read())
+            if not os.path.exists(config_path):
+                print(f"Downloading [{config_path}] from s3...")
+                with s3.open(config_path, 'rb') as fin:
+                    with open(config_path, 'wb') as fout:
+                        fout.write(fin.read())
+            if not os.path.exists(model_path):
+                print(f"Downloading [{model_path}] from s3...")
+                with s3.open(model_path, 'rb') as fin:
+                    with open(model_path, 'wb') as fout:
+                        fout.write(fin.read())
 
         tokenizer = BertTokenizer.from_pretrained(vocab_path, do_lower_case=True)
         bert_config = BertConfig.from_json_file(config_path)
